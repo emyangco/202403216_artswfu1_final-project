@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maze Game</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
+      font-family: Arial, sans-serif;
+    }
+
+    canvas {
+      display: block;
+      margin: auto;
+      background: #222;
+    }
+
+    #video-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      justify-content: center;
+      align-items: center;
+    }
+
+    #video-modal video {
+      max-width: 90%;
+      max-height: 90%;
+    }
+
+    #video-modal button {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      background: red;
+      color: white;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <div id="video-modal">
+    <button onclick="closeVideo()">Close</button>
+    <video id="scare-video" controls></video>
+  </div>
+  
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const modal = document.getElementById('video-modal');
+    const videoElement = document.getElementById('scare-video');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const player = { x: 50, y: 50, size: 10, speed: 5 };
+    const finish = { x: canvas.width - 70, y: canvas.height - 70, size: 50 };
+    const walls = [
+      { x: 100, y: 0, width: 20, height: 300 },
+      { x: 200, y: 300, width: 20, height: 300 },
+      { x: 100, y: 300, width: 400, height: 20 },
+      { x: 300, y: 100, width: 20, height: 400 },
+    ];
+    const videos = ['video1.mp4', 'video2.mp4', 'video3.mp4', 'video4.mp4', 'video5.mp4'];
+    let currentRound = 0;
+
+    function drawPlayer() {
+      ctx.fillStyle = 'blue';
+      ctx.fillRect(player.x, player.y, player.size, player.size);
+    }
+
+    function drawFinish() {
+      ctx.fillStyle = 'red';
+      ctx.fillRect(finish.x, finish.y, finish.size, finish.size);
+    }
+
+    function drawWalls() {
+      ctx.fillStyle = 'white';
+      walls.forEach(wall => {
+        ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
+      });
+    }
+
+    function playVideo(videoIndex) {
+      modal.style.display = 'flex';
+      videoElement.src = videos[videoIndex];
+      videoElement.play();
+    }
+
+    function closeVideo() {
+      modal.style.display = 'none';
+      videoElement.pause();
+    }
+
+    function detectCollision(rect1, rect2) {
+      return (
+        rect1.x < rect2.x + rect2.width &&
+        rect1.x + rect1.size > rect2.x &&
+        rect1.y < rect2.y + rect2.height &&
+        rect1.y + rect1.size > rect2.y
+      );
+    }
+
+    function resetPlayer() {
+      player.x = 50;
+      player.y = 50;
+    }
+
+    function nextRound() {
+      if (currentRound < videos.length - 1) {
+        currentRound++;
+        resetPlayer();
+      } else {
+        alert('Congratulations! You completed all rounds.');
+        resetPlayer();
+        currentRound = 0;
+      }
+    }
+
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawPlayer();
+      drawFinish();
+      drawWalls();
+
+      // Check collisions
+      walls.forEach(wall => {
+        if (detectCollision(player, wall)) {
+          playVideo(currentRound);
+          resetPlayer();
+        }
+      });
+
+      // Check finish
+      if (detectCollision(player, finish)) {
+        nextRound();
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Movement
+    window.addEventListener('keydown', e => {
+      if (e.key === 'ArrowUp') player.y -= player.speed;
+      if (e.key === 'ArrowDown') player.y += player.speed;
+      if (e.key === 'ArrowLeft') player.x -= player.speed;
+      if (e.key === 'ArrowRight') player.x += player.speed;
+    });
+
+    gameLoop();
+  </script>
+</body>
+</html>
